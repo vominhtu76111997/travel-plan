@@ -9,8 +9,17 @@
 
   const $=id=>document.getElementById(id);
   const CLIENT='c'+Math.random().toString(36).slice(2)+Date.now().toString(36);
-  const FB={ready:false,auth:null,db:null,user:null,tripId:localStorage.getItem('dl_tripId')||'',ref:null,pushTimer:null,applying:false,mode:'login',status:''};
-  const urlTrip=(new URLSearchParams(location.search).get('trip')||'').trim();
+  // Chuẩn hoá mã chuyến — DÙNG CHUNG cho ô nhập, link mời & localStorage,
+  // để mọi thiết bị luôn ra cùng một mã (tránh lệch do hoa/thường hay khoảng trắng).
+  function normTrip(s){return String(s==null?'':s).trim().toLowerCase().replace(/\s+/g,'-');}
+  const FB={ready:false,auth:null,db:null,user:null,tripId:normTrip(localStorage.getItem('dl_tripId')||''),ref:null,pushTimer:null,applying:false,mode:'login',status:''};
+  const urlTrip=normTrip(new URLSearchParams(location.search).get('trip')||'');
+  // Link mời (?trip=…) LUÔN thắng mã cũ trong localStorage — nếu không, người mở
+  // link mời mà máy đã có mã khác sẽ ở nhầm chuyến và "không đồng bộ được".
+  function adoptUrlTrip(){
+    if(urlTrip&&urlTrip!==FB.tripId){FB.tripId=urlTrip;localStorage.setItem('dl_tripId',urlTrip);return true;}
+    return false;
+  }
 
   function toast(m,ok){if(window.DL&&window.DL.toast)window.DL.toast(m,ok!==false);}
   function nowTime(){return new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -26,7 +35,7 @@
       if(u){
         localStorage.setItem('dl_authed','1');
         closeLogin();
-        if(!FB.tripId&&urlTrip){FB.tripId=urlTrip;localStorage.setItem('dl_tripId',urlTrip);}
+        adoptUrlTrip();
         if(FB.tripId)subscribe();
         else openTrip();                 // đã đăng nhập nhưng chưa có mã → hiện màn nhập mã ngay
       }else{
@@ -61,8 +70,8 @@
       localStorage.setItem('dl_authed','1');localStorage.removeItem('dl_offline');
       closeLogin();$('fbPass').value='';
       toast('Đã đăng nhập');
-      if(urlTrip&&!FB.tripId){FB.tripId=urlTrip;localStorage.setItem('dl_tripId',urlTrip);subscribe();}
-      else if(FB.tripId)subscribe();
+      adoptUrlTrip();
+      if(FB.tripId)subscribe();
       else openTrip();                    // đăng nhập xong → hiện màn nhập mã ngay
     }).catch(function(err){
       $('fbErr').textContent=friendlyErr(err.code||err.message);
@@ -90,7 +99,7 @@
   function openTrip(){if(!FB.user&&!localStorage.getItem('dl_authed')){openLogin();return;}$('tripCodeInput').value=FB.tripId||'';$('tripModal').classList.add('show');}
   window.fbCloseTrip=function(){$('tripModal').classList.remove('show');};
   window.fbJoinTrip=function(){
-    let code=($('tripCodeInput').value||'').trim().toLowerCase().replace(/\s+/g,'-');
+    let code=normTrip($('tripCodeInput').value||'');
     if(!code){toast('Nhập mã chuyến đi',false);return;}
     FB.tripId=code;localStorage.setItem('dl_tripId',code);
     $('tripModal').classList.remove('show');

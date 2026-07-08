@@ -653,14 +653,18 @@ window.DL={
   // áp dữ liệu từ Firebase vào local (KHÔNG đẩy ngược lên để tránh vòng lặp)
   set(d){
     if(!d||typeof d!=='object')return;
-    if(Array.isArray(d.units))units=d.units;
-    if(Array.isArray(d.expenses))expenses=d.expenses;
-    if(Array.isArray(d.stays))stays=d.stays;
-    if(Array.isArray(d.itin))itin=d.itin;
-    if(Array.isArray(d.places))places=d.places;
-    if(Array.isArray(d.foods))foods=d.foods;
-    if(Array.isArray(d.packing))packing=d.packing;
-    if(Array.isArray(d.checklist))checklist=d.checklist;
+    // Firebase KHÔNG lưu mảng rỗng → key biến mất khỏi snapshot. Vì pushNow luôn
+    // gửi đủ 8 mảng, một key vắng mặt nghĩa là "mảng đó đã bị xoá sạch" ⇒ áp thành []
+    // (nếu chỉ dùng `if(Array.isArray)` thì thao tác xoá hết sẽ KHÔNG đồng bộ sang máy khác).
+    const pick=(k,cur)=>Array.isArray(d[k])?d[k]:(k in d?cur:[]);
+    units    = pick('units',units);
+    expenses = pick('expenses',expenses);
+    stays    = pick('stays',stays);
+    itin     = pick('itin',itin);
+    places   = pick('places',places);
+    foods    = pick('foods',foods);
+    packing  = pick('packing',packing);
+    checklist= pick('checklist',checklist);
     if(d.meta&&typeof d.meta==='object')meta=d.meta;
     persistLocal();
     if($('sidebarDate'))$('sidebarDate').textContent=meta.tripStart?fmtDate(meta.tripStart):'';
