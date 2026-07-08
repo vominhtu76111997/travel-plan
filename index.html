@@ -263,6 +263,7 @@
       <div class="field"><label>Ngày khởi hành (đếm ngược)</label><input type="date" id="tripStart" oninput="saveMeta()"/></div>
     </div>
   </div>
+  <div class="settings-section"><h2>Đồng bộ realtime (Firebase)</h2><div class="card" id="syncBox"><div style="font-size:11px;color:var(--text3);">Đang khởi tạo…</div></div></div>
   <div class="settings-section"><h2>Giao diện</h2><div class="theme-row" id="themeRow"></div><div class="toggle-row"><span>Âm thanh khi thao tác</span><button class="toggle" id="soundToggle" onclick="toggleSound()"></button></div></div>
   <div class="settings-section"><h2>Dữ liệu</h2><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-green" onclick="exportCSV()">↓ CSV chi phí</button><button class="btn btn-green" onclick="exportJSON()">↓ Backup JSON</button><button class="btn" onclick="document.getElementById('importFile').click()">↑ Import</button><input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)"/></div></div>
   <div class="settings-section"><h2>Cài lên iPhone</h2><div class="card" style="font-size:12px;color:var(--text2);line-height:1.7;">Safari → Chia sẻ → Thêm vào MH chính → Xong</div></div>
@@ -290,6 +291,40 @@
   </div>
 </div>
 
+<!-- FIREBASE LOGIN OVERLAY -->
+<div id="fbLogin"><div class="fb-box">
+  <div style="font-size:34px;text-align:center;margin-bottom:6px;">🏔️</div>
+  <h2>Đồng bộ chuyến đi</h2>
+  <div class="fb-sub" id="fbSub">Đăng nhập để cả nhóm cùng chỉnh sửa realtime</div>
+  <div class="fb-seg" id="fbSeg">
+    <button type="button" class="on" data-mode="login" onclick="fbSetMode('login')">Đăng nhập</button>
+    <button type="button" data-mode="signup" onclick="fbSetMode('signup')">Đăng ký</button>
+  </div>
+  <form onsubmit="fbSubmitAuth(event)">
+    <input id="fbEmail" type="email" placeholder="Email" autocomplete="username" inputmode="email">
+    <input id="fbPass" type="password" placeholder="Mật khẩu (≥ 6 ký tự)" autocomplete="current-password">
+    <button type="submit" class="fb-go" id="fbGoBtn">Đăng nhập</button>
+  </form>
+  <div class="fb-err" id="fbErr"></div>
+  <span class="fb-skip" onclick="fbCloseLogin()">Để sau — dùng offline</span>
+</div></div>
+
+<!-- TRIP CODE MODAL -->
+<div class="calc-overlay" id="tripModal" onclick="if(event.target===this)fbCloseTrip()">
+  <div class="calc-box edit-box">
+    <h3>🧭 Mã chuyến đi</h3>
+    <div class="section-hint">Cả nhóm nhập <b>cùng một mã</b> để xem/sửa chung. Tạo mã mới rồi chia sẻ link cho mọi người, hoặc nhập mã bạn được cho.</div>
+    <div class="edit-field"><label>Nhập mã chuyến đi</label><input type="text" id="tripCodeInput" placeholder="vd: dalat-a7f3k9" autocapitalize="off"/></div>
+    <div class="edit-actions"><button type="button" class="btn-full" onclick="fbJoinTrip()">Vào chuyến này</button></div>
+    <div style="text-align:center;margin-top:12px;"><span class="fb-skip" style="color:var(--accent)" onclick="fbCreateTrip()">✨ Hoặc tạo mã mới ngẫu nhiên</span></div>
+  </div>
+</div>
+
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<!-- Firebase (compat) — nạp defer, không chặn khởi động app -->
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-app-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-auth-compat.js"></script>
+<script defer src="https://www.gstatic.com/firebasejs/10.12.5/firebase-database-compat.js"></script>
 <script src="./app.js"></script>
+<script defer src="./sync.js"></script>
 </body></html>

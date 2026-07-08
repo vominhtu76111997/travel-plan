@@ -98,7 +98,7 @@ let curBuoi  = 'Sáng';
 
 /* ── SAVE ── */
 const S={units:'dl_units',expenses:'dl_expenses',stays:'dl_stays',itin:'dl_itin',places:'dl_places',foods:'dl_foods',packing:'dl_packing',checklist:'dl_checklist',meta:'dl_meta'};
-function persist(){
+function persistLocal(){
   localStorage.setItem(S.units,JSON.stringify(units));
   localStorage.setItem(S.expenses,JSON.stringify(expenses));
   localStorage.setItem(S.stays,JSON.stringify(stays));
@@ -109,6 +109,7 @@ function persist(){
   localStorage.setItem(S.checklist,JSON.stringify(checklist));
   localStorage.setItem(S.meta,JSON.stringify(meta));
 }
+function persist(){persistLocal();if(window.__fbPush)window.__fbPush();}
 
 /* ── FORMAT ── */
 const fmt=n=>'₫'+Math.round(Math.abs(+n||0)).toLocaleString('vi-VN');
@@ -162,8 +163,9 @@ function togglePrivacy(){const on=document.body.classList.toggle('privacy');$('p
 
 /* ── NAV ── */
 const RENDER={overview:renderOverview,members:renderMembers,expenses:renderExpenses,settle:renderSettle,stays:renderStays,itinerary:renderItin,places:renderPlaces,food:renderFood,packing:renderPacking,checklist:renderChecklist,settings:renderSettings};
+let curPage='overview';
 function showPage(p){
-  playClick();
+  playClick();curPage=p;
   document.querySelectorAll('.page').forEach(el=>el.classList.remove('active'));
   const pg=$('page-'+p);if(pg)pg.classList.add('active');
   document.querySelectorAll('.nav-item').forEach(el=>el.classList.toggle('active',el.dataset.page===p));
@@ -560,6 +562,7 @@ function renderSettings(){
   $('soundToggle').className='toggle'+(soundOn?' on':'');
   $('tripName').value=meta.tripName||'';
   $('tripStart').value=meta.tripStart||'';
+  if(window.fbRenderSync)window.fbRenderSync();
 }
 function saveMeta(){meta.tripName=$('tripName').value;meta.tripStart=$('tripStart').value;persist();$('sidebarDate')&&(($('sidebarDate').textContent=meta.tripStart?fmtDate(meta.tripStart):''));}
 
@@ -641,6 +644,30 @@ setTimeout(()=>gnSync(true),300);
   function start(){if(!raf)raf=requestAnimationFrame(frame);}function stop(){if(raf){cancelAnimationFrame(raf);raf=null;}}
   document.addEventListener('visibilitychange',()=>{if(document.hidden)stop();else{last=0;start();}});start();
 })();
+
+/* ════════ SYNC BRIDGE (dùng bởi sync.js — Firebase) ════════ */
+function rerenderActive(){fillUnitSelects();if(RENDER[curPage])RENDER[curPage]();runCountingAnimations();}
+window.DL={
+  // đọc toàn bộ dữ liệu chuyến đi để đẩy lên Firebase
+  get(){return {units,expenses,stays,itin,places,foods,packing,checklist,meta};},
+  // áp dữ liệu từ Firebase vào local (KHÔNG đẩy ngược lên để tránh vòng lặp)
+  set(d){
+    if(!d||typeof d!=='object')return;
+    if(Array.isArray(d.units))units=d.units;
+    if(Array.isArray(d.expenses))expenses=d.expenses;
+    if(Array.isArray(d.stays))stays=d.stays;
+    if(Array.isArray(d.itin))itin=d.itin;
+    if(Array.isArray(d.places))places=d.places;
+    if(Array.isArray(d.foods))foods=d.foods;
+    if(Array.isArray(d.packing))packing=d.packing;
+    if(Array.isArray(d.checklist))checklist=d.checklist;
+    if(d.meta&&typeof d.meta==='object')meta=d.meta;
+    persistLocal();
+    if($('sidebarDate'))$('sidebarDate').textContent=meta.tripStart?fmtDate(meta.tripStart):'';
+    rerenderActive();
+  },
+  toast:showToast
+};
 
 /* ════════ INIT ════════ */
 function init(){
