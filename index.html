@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Đà Lạt">
+<meta name="theme-color" content="#0a0a0c">
+<link rel="manifest" href="./manifest.json">
+<link rel="icon" type="image/svg+xml" href="./icon.svg">
+<title>Plan Đà Lạt — Chia tiền & Lịch trình</title>
+<link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./styles.css">
+<link rel="stylesheet" href="./travel.css">
+</head>
+<body data-theme="dark">
+<div id="appSplash"><svg class="sp-logo" viewBox="0 0 100 100" width="78" height="78" aria-hidden="true"><defs><linearGradient id="spGrad" x1="0" y1="1" x2="1" y2="0"><stop offset="0" stop-color="#1D9E75"/><stop offset="1" stop-color="#5DCAA5"/></linearGradient></defs><polyline class="sp-line" points="18,70 38,44 52,58 82,22" fill="none" stroke="url(#spGrad)" stroke-width="7" stroke-linecap="round" stroke-linejoin="round"/><circle class="sp-dot" cx="82" cy="22" r="7" fill="#5DCAA5"/></svg><div class="sp-ring"></div><div class="sp-msg" id="splashMsg">Đang chuẩn bị chuyến đi…</div></div>
+<script>setTimeout(function(){var s=document.getElementById('appSplash');if(s){s.style.opacity='0';setTimeout(function(){if(s&&s.parentNode)s.parentNode.removeChild(s);},450);}},8000);</script>
+
+<div class="video-bg"><canvas id="scifiBg"></canvas></div>
+<div class="layout">
+<nav class="sidebar">
+  <div class="logo"><div class="logo-title">🏔️ Plan Đà Lạt</div><div class="logo-sub" id="sidebarDate"></div></div>
+  <div class="nav-section">Chi phí</div>
+  <div class="nav-item active" data-page="overview" onclick="showPage('overview')"><span class="nav-emoji" style="color:#4A9EF5">📊</span><span>Tổng quan</span></div>
+  <div class="nav-item" data-page="members" onclick="showPage('members')"><span class="nav-emoji" style="color:#A87FE0">👥</span><span>Thành viên</span></div>
+  <div class="nav-item" data-page="expenses" onclick="showPage('expenses')"><span class="nav-emoji" style="color:#D85A30">💰</span><span>Chi phí</span></div>
+  <div class="nav-item" data-page="settle" onclick="showPage('settle')"><span class="nav-emoji" style="color:#1D9E75">🤝</span><span>Chia tiền</span></div>
+  <div class="nav-section">Kế hoạch</div>
+  <div class="nav-item" data-page="stays" onclick="showPage('stays')"><span class="nav-emoji" style="color:#378ADD">🏨</span><span>Lưu trú</span></div>
+  <div class="nav-item" data-page="itinerary" onclick="showPage('itinerary')"><span class="nav-emoji" style="color:#F0B429">🗓️</span><span>Lịch trình</span></div>
+  <div class="nav-item" data-page="places" onclick="showPage('places')"><span class="nav-emoji" style="color:#3AAFA9">📍</span><span>Địa điểm</span></div>
+  <div class="nav-item" data-page="food" onclick="showPage('food')"><span class="nav-emoji" style="color:#E24B4A">🍜</span><span>Ẩm thực</span></div>
+  <div class="nav-item" data-page="packing" onclick="showPage('packing')"><span class="nav-emoji" style="color:#BA7517">🎒</span><span>Đồ mang theo</span></div>
+  <div class="nav-item" data-page="checklist" onclick="showPage('checklist')"><span class="nav-emoji" style="color:#5DCAA5">✅</span><span>Checklist</span></div>
+  <div class="nav-item" data-page="settings" onclick="showPage('settings')"><span class="nav-emoji" style="color:#888780">⚙️</span><span>Cài đặt</span></div>
+</nav>
+
+<nav class="glass-nav" id="glassNav" aria-label="Điều hướng">
+  <div class="gn-pill" id="gnPill"></div>
+  <button class="gn-item active" data-page="overview" aria-label="Tổng quan"><span>📊</span></button>
+  <button class="gn-item" data-page="expenses" aria-label="Chi phí"><span>💰</span></button>
+  <button class="gn-item" data-page="settle" aria-label="Chia tiền"><span>🤝</span></button>
+  <button class="gn-item" data-page="itinerary" aria-label="Lịch trình"><span>🗓️</span></button>
+  <button class="gn-item" data-page="places" aria-label="Địa điểm"><span>📍</span></button>
+  <button class="gn-item" data-page="food" aria-label="Ẩm thực"><span>🍜</span></button>
+  <button class="gn-item" data-page="settings" aria-label="Cài đặt"><span>⚙️</span></button>
+</nav>
+
+<main class="main">
+
+<!-- OVERVIEW -->
+<div id="page-overview" class="page active">
+  <div class="topbar"><div class="topbar-left"><h1>📊 Tổng quan chi phí</h1><div class="sub">Tự tính từ Thành viên & Chi phí — không cần sửa tay</div></div><div class="topbar-actions"><button class="btn" onclick="exportCSV()">↓ CSV</button></div></div>
+  <div id="heroWrap"></div>
+  <div class="metrics" id="ovMetrics"></div>
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">🧮 Chi phí riêng từng cặp / người</div>
+    <div class="section-hint">Chia chung = chi phí "cả nhóm" chia đều theo đầu người. Tổng phải trả = chi phí riêng + chia chung.</div>
+    <div class="table-scroll"><table class="dl-table" id="ovTable"></table></div>
+  </div>
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">💸 Chi theo loại</div>
+    <div id="ovByCat"></div>
+  </div>
+</div>
+
+<!-- MEMBERS -->
+<div id="page-members" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>👥 Thành viên & lịch đi</h1><div class="sub">Vợ chồng tính chung 1 dòng (2 người) · người lẻ 1 dòng</div></div></div>
+  <div class="metrics" id="memMetrics"></div>
+  <div class="member-grid" id="memGrid"></div>
+  <div class="card">
+    <div class="card-title blue">+ Thêm cặp / người</div>
+    <div class="form-grid-2">
+      <div class="field"><label>Tên (cặp / người)</label><input type="text" id="mName" placeholder="Vợ chồng Tú, Linh..."/></div>
+      <div class="field"><label>Số người</label><input type="number" id="mPeople" placeholder="2" min="1" value="2"/></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="field"><label>Ngày đi</label><input type="date" id="mGo"/></div>
+      <div class="field"><label>Ngày về</label><input type="date" id="mBack"/></div>
+    </div>
+    <div class="form-grid-3">
+      <div class="field"><label>Giờ đi</label><input type="time" id="mTimeGo" value="07:00"/></div>
+      <div class="field"><label>Giờ về</label><input type="time" id="mTimeBack" value="18:00"/></div>
+      <div class="field"><label>Ghi chú</label><input type="text" id="mNote" placeholder="Tự lái ô tô..."/></div>
+    </div>
+    <button class="btn-full btn-full-blue" onclick="addMember()">+ Thêm thành viên</button>
+  </div>
+</div>
+
+<!-- EXPENSES -->
+<div id="page-expenses" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>💰 Chi phí</h1><div class="sub">Ai ứng tiền → Người chi · Tính cho ai → Phân bổ</div></div><div class="topbar-actions"><button class="btn" onclick="exportCSV()">↓ CSV</button></div></div>
+  <div class="metrics" id="expMetrics"></div>
+  <div class="card">
+    <div class="card-title red">+ Thêm khoản chi</div>
+    <div class="form-grid-3">
+      <div class="field"><label>Ngày</label><input type="date" id="eDate"/></div>
+      <div class="field"><label>Khoản mục</label><input type="text" id="eItem" placeholder="Tiền phòng, Xăng xe..."/></div>
+      <div class="field"><label>Loại</label><select id="eCat"></select></div>
+    </div>
+    <div class="form-grid-3">
+      <div class="field"><label>Người chi (tạm ứng)</label><select id="ePayer"></select></div>
+      <div class="field"><label>Phân bổ cho</label><select id="eAlloc"></select></div>
+      <div class="field"><label>Số tiền (₫)</label><div class="smart-input-wrap"><input type="text" id="eAmt" inputmode="decimal" placeholder="600k · 3.6tr · 800000" oninput="moneyPreview(this,'eAmtP')"/><span class="smart-preview" id="eAmtP"></span></div></div>
+    </div>
+    <div class="field"><label>Ghi chú</label><input type="text" id="eNote" placeholder="3 phòng x 600k x 2 đêm..."/></div>
+    <button class="btn-full btn-full-red" onclick="addExpense()">+ Thêm chi phí</button>
+  </div>
+  <div class="card">
+    <div class="tx-header"><h3>Danh sách chi phí</h3><span id="expCount" style="font-size:11px;color:var(--text3);"></span></div>
+    <div id="expList"></div>
+  </div>
+</div>
+
+<!-- SETTLE -->
+<div id="page-settle" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>🤝 Chia tiền & ai đã đóng</h1><div class="sub">Số dư âm = còn phải đóng · dương = được nhận lại</div></div></div>
+  <div class="metrics" id="settleMetrics"></div>
+  <div class="card">
+    <div class="card-title" style="color:var(--accent2);">📋 Bảng đối soát</div>
+    <div class="table-scroll"><table class="dl-table" id="settleTable"></table></div>
+  </div>
+  <div class="card">
+    <div class="card-title green">💵 Chuyển khoản gợi ý — trả ít lần nhất</div>
+    <div class="section-hint">Cách chuyển tiền tối ưu để mọi người về 0. Ai thiếu chuyển cho ai dư.</div>
+    <div id="transferList"></div>
+  </div>
+</div>
+
+<!-- STAYS -->
+<div id="page-stays" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>🏨 Lưu trú</h1><div class="sub">Thành tiền = Giá/phòng/đêm × Số đêm × Số phòng</div></div></div>
+  <div class="metrics" id="stayMetrics"></div>
+  <div class="card">
+    <div class="card-title blue">+ Thêm nơi ở</div>
+    <div class="form-grid-2">
+      <div class="field"><label>Tên KS / Homestay</label><input type="text" id="sName" placeholder="Homestay ABC Đà Lạt"/></div>
+      <div class="field"><label>Địa chỉ</label><input type="text" id="sAddr" placeholder="12 Trần Hưng Đạo, P.10"/></div>
+    </div>
+    <div class="form-grid-4">
+      <div class="field"><label>Giá/phòng/đêm (₫)</label><div class="smart-input-wrap"><input type="text" id="sPrice" inputmode="decimal" placeholder="600k" oninput="moneyPreview(this,'sPriceP')"/><span class="smart-preview" id="sPriceP"></span></div></div>
+      <div class="field"><label>Người/phòng</label><input type="number" id="sPpl" placeholder="3" min="1"/></div>
+      <div class="field"><label>Số đêm</label><input type="number" id="sNights" placeholder="2" min="1"/></div>
+      <div class="field"><label>Số phòng</label><input type="number" id="sRooms" placeholder="3" min="1"/></div>
+    </div>
+    <div class="field"><label>Link / SĐT · Ghi chú</label><input type="text" id="sNote" placeholder="0900 000 000 · Gần chợ đêm"/></div>
+    <button class="btn-full btn-full-blue" onclick="addStay()">+ Thêm nơi ở</button>
+  </div>
+  <div id="stayList"></div>
+</div>
+
+<!-- ITINERARY -->
+<div id="page-itinerary" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>🗓️ Lịch trình theo ngày</h1><div class="sub">Kế hoạch theo buổi sáng / trưa / chiều / tối</div></div></div>
+  <div class="metrics" id="itinMetrics"></div>
+  <div class="card">
+    <div class="card-title" style="color:#F0B429;">+ Thêm hoạt động</div>
+    <div class="chi-type-toggle buoi-seg" id="buoiSeg">
+      <button type="button" class="chi-type-btn active" data-buoi="Sáng" onclick="setBuoi('Sáng')">🌅 Sáng</button>
+      <button type="button" class="chi-type-btn" data-buoi="Trưa" onclick="setBuoi('Trưa')">☀️ Trưa</button>
+      <button type="button" class="chi-type-btn" data-buoi="Chiều" onclick="setBuoi('Chiều')">🌤️ Chiều</button>
+      <button type="button" class="chi-type-btn" data-buoi="Tối" onclick="setBuoi('Tối')">🌙 Tối</button>
+    </div>
+    <div class="form-grid-2">
+      <div class="field"><label>Ngày</label><input type="date" id="iDate"/></div>
+      <div class="field"><label>Thời gian</label><input type="time" id="iTime" value="07:00"/></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="field"><label>Hoạt động</label><input type="text" id="iAct" placeholder="Săn mây + cà phê..."/></div>
+      <div class="field"><label>Địa điểm</label><input type="text" id="iPlace" placeholder="Cầu Đất"/></div>
+    </div>
+    <div class="form-grid-2">
+      <div class="field"><label>Chi phí dự kiến (₫)</label><div class="smart-input-wrap"><input type="text" id="iCost" inputmode="decimal" placeholder="0" oninput="moneyPreview(this,'iCostP')"/><span class="smart-preview" id="iCostP"></span></div></div>
+      <div class="field"><label>Ghi chú</label><input type="text" id="iNote" placeholder="Tập trung tại nhà Tú"/></div>
+    </div>
+    <button class="btn-full btn-full-amber" onclick="addItin()">+ Thêm vào lịch trình</button>
+  </div>
+  <div id="itinList"></div>
+</div>
+
+<!-- PLACES -->
+<div id="page-places" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>📍 Địa điểm sẽ đi</h1><div class="sub">Cà phê · chụp hình · quay phim · tham quan</div></div></div>
+  <div class="metrics" id="placeMetrics"></div>
+  <div class="card">
+    <div class="card-title" style="color:#3AAFA9;">+ Thêm địa điểm</div>
+    <div class="form-grid-2">
+      <div class="field"><label>Tên địa điểm</label><input type="text" id="pName" placeholder="Quảng trường Lâm Viên"/></div>
+      <div class="field"><label>Loại</label><select id="pType"></select></div>
+    </div>
+    <div class="form-grid-3">
+      <div class="field"><label>Địa chỉ</label><input type="text" id="pAddr" placeholder="P.10, Đà Lạt"/></div>
+      <div class="field"><label>Chi phí/người (₫)</label><div class="smart-input-wrap"><input type="text" id="pCost" inputmode="decimal" placeholder="0" oninput="moneyPreview(this,'pCostP')"/><span class="smart-preview" id="pCostP"></span></div></div>
+      <div class="field"><label>Ưu tiên</label><select id="pPri"><option>Cao</option><option>Trung bình</option><option>Thấp</option></select></div>
+    </div>
+    <div class="field"><label>Ghi chú</label><input type="text" id="pNote" placeholder="Chụp bình minh"/></div>
+    <button class="btn-full" style="border-color:#3AAFA9;color:#3AAFA9;background:rgba(58,175,169,.1);" onclick="addPlace()">+ Thêm địa điểm</button>
+  </div>
+  <div id="placeList"></div>
+</div>
+
+<!-- FOOD -->
+<div id="page-food" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>🍜 Ẩm thực & quán ăn</h1><div class="sub">Đặc sản muốn thử</div></div></div>
+  <div class="metrics" id="foodMetrics"></div>
+  <div class="card">
+    <div class="card-title red">+ Thêm quán</div>
+    <div class="form-grid-2">
+      <div class="field"><label>Tên quán</label><input type="text" id="fName" placeholder="Bánh căn Lê Thị Hồng"/></div>
+      <div class="field"><label>Món / đặc sản</label><input type="text" id="fDish" placeholder="Bánh căn trứng"/></div>
+    </div>
+    <div class="form-grid-3">
+      <div class="field"><label>Địa chỉ</label><input type="text" id="fAddr" placeholder="27 Yên Thế"/></div>
+      <div class="field"><label>Giá tham khảo (₫)</label><div class="smart-input-wrap"><input type="text" id="fPrice" inputmode="decimal" placeholder="40k" oninput="moneyPreview(this,'fPriceP')"/><span class="smart-preview" id="fPriceP"></span></div></div>
+      <div class="field"><label>Ghi chú</label><input type="text" id="fNote" placeholder="Đặt trước"/></div>
+    </div>
+    <button class="btn-full btn-full-red" onclick="addFood()">+ Thêm quán ăn</button>
+  </div>
+  <div id="foodList"></div>
+</div>
+
+<!-- PACKING -->
+<div id="page-packing" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>🎒 Đồ mang theo</h1><div class="sub">Ai mang gì · đã chuẩn bị chưa</div></div></div>
+  <div class="card"><div class="prog-wrap"><div class="prog-label" id="packPct">0%</div><div class="prog-bar-bg"><div class="prog-bar-fill" id="packBar" style="width:0%"></div></div></div>
+  <div class="form-grid-3">
+    <div class="field"><label>Món đồ / dụng cụ</label><input type="text" id="kName" placeholder="Flycam + pin"/></div>
+    <div class="field"><label>Nhóm đồ</label><input type="text" id="kGroup" placeholder="Chụp hình / Quay phim"/></div>
+    <div class="field"><label>Người mang</label><select id="kOwner"></select></div>
+  </div>
+  <div class="form-grid-2">
+    <div class="field"><label>Số lượng</label><input type="number" id="kQty" placeholder="1" value="1" min="1"/></div>
+    <div class="field"><label>Ghi chú</label><input type="text" id="kNote" placeholder="Sạc đầy"/></div>
+  </div>
+  <button class="btn-full" style="border-color:#BA7517;color:#BA7517;background:rgba(186,117,23,.1);" onclick="addPacking()">+ Thêm đồ</button></div>
+  <div id="packList"></div>
+</div>
+
+<!-- CHECKLIST -->
+<div id="page-checklist" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>✅ Việc cần chuẩn bị</h1><div class="sub">Trước chuyến đi · ai phụ trách · deadline</div></div></div>
+  <div class="card"><div class="prog-wrap"><div class="prog-label" id="chkPct">0%</div><div class="prog-bar-bg"><div class="prog-bar-fill" id="chkBar" style="width:0%"></div></div></div>
+  <div class="form-grid-3">
+    <div class="field"><label>Việc cần làm</label><input type="text" id="cTask" placeholder="Đặt homestay 3 phòng"/></div>
+    <div class="field"><label>Phụ trách</label><select id="cOwner"></select></div>
+    <div class="field"><label>Hạn chót</label><input type="date" id="cDue"/></div>
+  </div>
+  <div class="field"><label>Ghi chú</label><input type="text" id="cNote" placeholder=""/></div>
+  <button class="btn-full btn-full-green" onclick="addCheck()">+ Thêm việc</button></div>
+  <div id="chkList"></div>
+</div>
+
+<!-- SETTINGS -->
+<div id="page-settings" class="page">
+  <div class="topbar"><div class="topbar-left"><h1>⚙️ Cài đặt</h1><div class="sub">Tùy chỉnh app</div></div></div>
+  <div class="settings-section"><h2>Chuyến đi</h2>
+    <div class="form-grid-2">
+      <div class="field"><label>Tên chuyến đi</label><input type="text" id="tripName" oninput="saveMeta()"/></div>
+      <div class="field"><label>Ngày khởi hành (đếm ngược)</label><input type="date" id="tripStart" oninput="saveMeta()"/></div>
+    </div>
+  </div>
+  <div class="settings-section"><h2>Giao diện</h2><div class="theme-row" id="themeRow"></div><div class="toggle-row"><span>Âm thanh khi thao tác</span><button class="toggle" id="soundToggle" onclick="toggleSound()"></button></div></div>
+  <div class="settings-section"><h2>Dữ liệu</h2><div style="display:flex;gap:8px;flex-wrap:wrap;"><button class="btn btn-green" onclick="exportCSV()">↓ CSV chi phí</button><button class="btn btn-green" onclick="exportJSON()">↓ Backup JSON</button><button class="btn" onclick="document.getElementById('importFile').click()">↑ Import</button><input type="file" id="importFile" accept=".json" style="display:none" onchange="importJSON(event)"/></div></div>
+  <div class="settings-section"><h2>Cài lên iPhone</h2><div class="card" style="font-size:12px;color:var(--text2);line-height:1.7;">Safari → Chia sẻ → Thêm vào MH chính → Xong</div></div>
+  <div class="settings-section"><h2>Vùng nguy hiểm</h2><div class="danger-zone"><p>Xóa toàn bộ dữ liệu chuyến đi. Không hoàn tác.</p><button class="btn btn-red" onclick="resetAll()">Xóa tất cả</button><button class="btn" style="margin-left:8px;" onclick="loadSeed()">↺ Nạp lại dữ liệu mẫu Đà Lạt</button></div></div>
+</div>
+
+</main>
+</div>
+
+<div class="fab-stack">
+  <button class="fab" id="privacyFab" onclick="togglePrivacy()" title="Ẩn/hiện số tiền" aria-label="Ẩn/hiện số tiền"></button>
+  <button class="fab fab-main" onclick="showPage('expenses')" title="Thêm chi phí" aria-label="Thêm chi phí">＋</button>
+</div>
+<div class="toast" id="toast"></div>
+
+<!-- EDIT MODAL (generic) -->
+<div class="calc-overlay" id="editOverlay" onclick="if(event.target===this)closeEdit()">
+  <div class="calc-box edit-box wide">
+    <h3 id="editTitle">✏️ Sửa</h3>
+    <div class="scrolly" id="editBody"></div>
+    <div class="edit-actions">
+      <button type="button" class="edit-del" onclick="deleteEditing()" title="Xoá">🗑</button>
+      <button type="button" class="btn-full" onclick="saveEdit()">Lưu thay đổi</button>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<script src="./app.js"></script>
+</body></html>
