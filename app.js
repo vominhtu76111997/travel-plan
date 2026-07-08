@@ -669,6 +669,9 @@ window.DL={
   toast:showToast
 };
 
+/* ════════ SPLASH ════════ */
+function hideSplash(){const s=$('appSplash');if(!s)return;s.style.opacity='0';setTimeout(()=>{if(s&&s.parentNode)s.parentNode.removeChild(s);},400);}
+
 /* ════════ INIT ════════ */
 function init(){
   document.body.setAttribute('data-theme',theme);
@@ -681,5 +684,12 @@ function init(){
   fillUnitSelects();
   renderOverview();
   runCountingAnimations();
+  // Chưa từng đăng nhập & không chọn offline → hiện màn đăng nhập NGAY (dưới splash),
+  // splash mờ đi là thấy luôn. (sync.js sẽ gắn nút khi Firebase sẵn sàng.)
+  if(!localStorage.getItem('dl_authed')&&!localStorage.getItem('dl_offline')){
+    const fb=$('fbLogin');if(fb)fb.style.display='flex';
+  }
+  // Ẩn splash nhanh (~0.35s) — dữ liệu local có sẵn, không cần chờ.
+  setTimeout(hideSplash,350);
 }
 init();

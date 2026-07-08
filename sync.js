@@ -18,23 +18,24 @@
 
   /* ── Chờ Firebase SDK sẵn sàng (nạp defer) ── */
   function boot(){
-    if(typeof firebase==='undefined'||!firebase.initializeApp){return setTimeout(boot,120);}
+    if(typeof firebase==='undefined'||!firebase.initializeApp){return setTimeout(boot,100);}
     try{firebase.initializeApp(FIREBASE_CONFIG);}catch(e){/* đã init */}
     FB.auth=firebase.auth();FB.db=firebase.database();FB.ready=true;
     FB.auth.onAuthStateChanged(function(u){
       FB.user=u||null;
       if(u){
+        localStorage.setItem('dl_authed','1');
+        closeLogin();
         if(!FB.tripId&&urlTrip){FB.tripId=urlTrip;localStorage.setItem('dl_tripId',urlTrip);}
         if(FB.tripId)subscribe();
-        else if(urlTrip){openTrip();}
+        else openTrip();                 // đã đăng nhập nhưng chưa có mã → hiện màn nhập mã ngay
       }else{
         if(FB.ref){FB.ref.off();FB.ref=null;}
+        if(!localStorage.getItem('dl_offline'))openLogin();  // chưa đăng nhập → hiện màn đăng nhập
       }
       renderBox();
     });
     renderBox();
-    // Nếu mở bằng link chia sẻ mà chưa đăng nhập → mời đăng nhập
-    if(urlTrip&&!FB.user)setTimeout(openLogin,600);
   }
   boot();
 
@@ -46,18 +47,23 @@
     $('fbPass').setAttribute('autocomplete',m==='signup'?'new-password':'current-password');
   };
   window.fbOpenLogin=openLogin;
-  function openLogin(){$('fbErr').textContent='';$('fbLogin').style.display='flex';}
-  window.fbCloseLogin=function(){$('fbLogin').style.display='none';};
+  function openLogin(){localStorage.removeItem('dl_offline');$('fbErr').textContent='';$('fbLogin').style.display='flex';}
+  function closeLogin(){$('fbLogin').style.display='none';}
+  window.fbCloseLogin=function(){localStorage.setItem('dl_offline','1');closeLogin();};
   window.fbSubmitAuth=function(e){
     e.preventDefault();
     const email=$('fbEmail').value.trim(),pass=$('fbPass').value;
     if(!email||!pass){$('fbErr').textContent='Nhập email & mật khẩu';return;}
     $('fbGoBtn').textContent='Đang xử lý…';
     const p=FB.mode==='signup'?FB.auth.createUserWithEmailAndPassword(email,pass):FB.auth.signInWithEmailAndPassword(email,pass);
-    p.then(function(){
-      $('fbLogin').style.display='none';$('fbPass').value='';
+    p.then(function(cred){
+      FB.user=(cred&&cred.user)||FB.user;
+      localStorage.setItem('dl_authed','1');localStorage.removeItem('dl_offline');
+      closeLogin();$('fbPass').value='';
       toast('Đã đăng nhập');
-      if(!FB.tripId)openTrip();
+      if(urlTrip&&!FB.tripId){FB.tripId=urlTrip;localStorage.setItem('dl_tripId',urlTrip);subscribe();}
+      else if(FB.tripId)subscribe();
+      else openTrip();                    // đăng nhập xong → hiện màn nhập mã ngay
     }).catch(function(err){
       $('fbErr').textContent=friendlyErr(err.code||err.message);
       $('fbGoBtn').textContent=FB.mode==='signup'?'Tạo tài khoản':'Đăng nhập';
@@ -65,7 +71,8 @@
   };
   window.fbLogout=function(){
     if(!confirm('Đăng xuất? App vẫn dùng được offline.'))return;
-    FB.auth.signOut();FB.tripId='';localStorage.removeItem('dl_tripId');
+    FB.auth.signOut();FB.tripId='';
+    localStorage.removeItem('dl_tripId');localStorage.removeItem('dl_authed');localStorage.setItem('dl_offline','1');
     if(FB.ref){FB.ref.off();FB.ref=null;}
     setStatus('');toast('Đã đăng xuất');
   };
@@ -80,7 +87,7 @@
 
   /* ── TRIP CODE ── */
   window.fbOpenTrip=openTrip;
-  function openTrip(){if(!FB.user){openLogin();return;}$('tripCodeInput').value=FB.tripId||'';$('tripModal').classList.add('show');}
+  function openTrip(){if(!FB.user&&!localStorage.getItem('dl_authed')){openLogin();return;}$('tripCodeInput').value=FB.tripId||'';$('tripModal').classList.add('show');}
   window.fbCloseTrip=function(){$('tripModal').classList.remove('show');};
   window.fbJoinTrip=function(){
     let code=($('tripCodeInput').value||'').trim().toLowerCase().replace(/\s+/g,'-');
