@@ -10,9 +10,22 @@
   const $=id=>document.getElementById(id);
   const CLIENT='c'+Math.random().toString(36).slice(2)+Date.now().toString(36);
   // Chuẩn hoá mã chuyến — DÙNG CHUNG cho ô nhập, link mời & localStorage,
-  // để mọi thiết bị luôn ra cùng một mã (tránh lệch do hoa/thường hay khoảng trắng).
-  function normTrip(s){return String(s==null?'':s).trim().toLowerCase().replace(/\s+/g,'-');}
+  // để mọi thiết bị luôn ra cùng một mã.
+  //  • Nếu lỡ dán CẢ link mời (…?trip=…) vào ô mã, tự rút lấy mã thật bên trong
+  //    (gỡ nhiều lớp lồng — đây là nguyên nhân mã biến thành nguyên URL và sync gãy).
+  //  • Loại mọi ký tự KHÔNG hợp lệ cho key Firebase ( . # $ [ ] / và ký tự lạ),
+  //    chỉ giữ [a-z0-9_-]; nếu còn '.'/'/' trong mã thì ref() sẽ lỗi và không sync được.
+  function normTrip(s){
+    s=String(s==null?'':s).trim();
+    for(let i=0;i<6&&/[?&]trip=/i.test(s);i++){
+      s=s.replace(/^[\s\S]*?[?&]trip=([^?&#]*)[\s\S]*$/i,'$1');
+      try{s=decodeURIComponent(s);}catch(e){/* giữ nguyên nếu decode lỗi */}
+    }
+    return s.trim().toLowerCase().replace(/\s+/g,'-').replace(/[^a-z0-9_-]/g,'');
+  }
   const FB={ready:false,auth:null,db:null,user:null,tripId:normTrip(localStorage.getItem('dl_tripId')||''),ref:null,pushTimer:null,applying:false,mode:'login',status:''};
+  // Ghi đè lại localStorage bằng mã ĐÃ làm sạch (xoá dấu vết mã cũ bị nhiễm URL).
+  if(FB.tripId)localStorage.setItem('dl_tripId',FB.tripId);
   const urlTrip=normTrip(new URLSearchParams(location.search).get('trip')||'');
   // Link mời (?trip=…) LUÔN thắng mã cũ trong localStorage — nếu không, người mở
   // link mời mà máy đã có mã khác sẽ ở nhầm chuyến và "không đồng bộ được".
