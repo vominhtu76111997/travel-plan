@@ -9,6 +9,10 @@
 
   const $=id=>document.getElementById(id);
   const CLIENT='c'+Math.random().toString(36).slice(2)+Date.now().toString(36);
+  // ⭐ MÃ CHUYẾN MẶC ĐỊNH — app đang dùng riêng cho nhóm bạn (chưa publish):
+  // ai đăng nhập mà chưa có mã sẽ TỰ vào chung chuyến này, không cần nhập mã.
+  // Đổi giá trị dưới đây nếu muốn dùng một chuyến chung khác (giữ định dạng [a-z0-9_-]).
+  const DEFAULT_TRIP='dalat-hoqxtf';
   // Chuẩn hoá mã chuyến — DÙNG CHUNG cho ô nhập, link mời & localStorage,
   // để mọi thiết bị luôn ra cùng một mã.
   //  • Nếu lỡ dán CẢ link mời (…?trip=…) vào ô mã, tự rút lấy mã thật bên trong
@@ -33,6 +37,12 @@
     if(urlTrip&&urlTrip!==FB.tripId){FB.tripId=urlTrip;localStorage.setItem('dl_tripId',urlTrip);return true;}
     return false;
   }
+  // Sau khi đăng nhập: ưu tiên link mời → mã đã lưu → nếu vẫn trống thì dùng MÃ MẶC ĐỊNH.
+  // Nhờ vậy tài khoản mới KHÔNG cần nhập mã, tự vào chung chuyến với cả nhóm.
+  function ensureTrip(){
+    adoptUrlTrip();
+    if(!FB.tripId){FB.tripId=normTrip(DEFAULT_TRIP);localStorage.setItem('dl_tripId',FB.tripId);}
+  }
 
   function toast(m,ok){if(window.DL&&window.DL.toast)window.DL.toast(m,ok!==false);}
   function nowTime(){return new Date().toLocaleTimeString('vi-VN',{hour:'2-digit',minute:'2-digit',second:'2-digit'});}
@@ -48,9 +58,8 @@
       if(u){
         localStorage.setItem('dl_authed','1');
         closeLogin();
-        adoptUrlTrip();
-        if(FB.tripId)subscribe();
-        else openTrip();                 // đã đăng nhập nhưng chưa có mã → hiện màn nhập mã ngay
+        ensureTrip();                    // tự dùng link mời / mã đã lưu / MÃ MẶC ĐỊNH
+        subscribe();
       }else{
         if(FB.ref){FB.ref.off();FB.ref=null;}
         if(!localStorage.getItem('dl_offline'))openLogin();  // chưa đăng nhập → hiện màn đăng nhập
@@ -83,9 +92,8 @@
       localStorage.setItem('dl_authed','1');localStorage.removeItem('dl_offline');
       closeLogin();$('fbPass').value='';
       toast('Đã đăng nhập');
-      adoptUrlTrip();
-      if(FB.tripId)subscribe();
-      else openTrip();                    // đăng nhập xong → hiện màn nhập mã ngay
+      ensureTrip();                       // tự vào mã mặc định nếu chưa có mã
+      subscribe();
     }).catch(function(err){
       $('fbErr').textContent=friendlyErr(err.code||err.message);
       $('fbGoBtn').textContent=FB.mode==='signup'?'Tạo tài khoản':'Đăng nhập';
