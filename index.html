@@ -167,16 +167,28 @@
     </div>
     <div class="form-grid-2">
       <div class="field"><label>Ngày</label><input type="date" id="iDate"/></div>
-      <div class="field"><label>Thời gian</label><input type="time" id="iTime" value="07:00"/></div>
+      <div class="field"><label>Giờ (0h → 23h)</label>
+        <div style="display:flex;gap:6px;align-items:center;">
+          <select id="iHour" style="flex:1;"></select>
+          <span style="color:var(--text3);font-weight:700;">:</span>
+          <select id="iMin" style="flex:1;"></select>
+        </div>
+      </div>
     </div>
     <div class="form-grid-2">
       <div class="field"><label>Hoạt động</label><input type="text" id="iAct" placeholder="Săn mây + cà phê..."/></div>
-      <div class="field"><label>Địa điểm</label><input type="text" id="iPlace" placeholder="Cầu Đất"/></div>
+      <div class="field"><label>Địa điểm (tên nơi)</label><input type="text" id="iPlace" placeholder="Cầu Đất, Quán Cơm Linh..."/></div>
     </div>
+    <div class="field"><label>Địa chỉ cụ thể</label><input type="text" id="iAddr" placeholder="6 Đ. Hùng Vương, Xuân Hương, Đà Lạt..."/></div>
     <div class="form-grid-2">
+      <div class="field"><label>Mức độ ưu tiên</label><select id="iPri">
+        <option value="normal">🔘 Bình thường</option>
+        <option value="high">⭐ ƯU TIÊN — nhất định phải đi</option>
+        <option value="low">💤 Không ưu tiên — bỏ được</option>
+      </select></div>
       <div class="field"><label>Chi phí dự kiến (₫)</label><div class="smart-input-wrap"><input type="text" id="iCost" inputmode="decimal" placeholder="0" oninput="moneyPreview(this,'iCostP')"/><span class="smart-preview" id="iCostP"></span></div></div>
-      <div class="field"><label>Ghi chú</label><input type="text" id="iNote" placeholder="Tập trung tại nhà Tú"/></div>
     </div>
+    <div class="field"><label>Ghi chú</label><input type="text" id="iNote" placeholder="Tập trung tại nhà Tú, có thể thay đổi..."/></div>
     <button class="btn-full btn-full-amber" onclick="addItin()">+ Thêm vào lịch trình</button>
   </div>
   <div id="itinList"></div>

@@ -361,6 +361,21 @@ function addStay(){
 
 /* ════════ ITINERARY ════════ */
 function setBuoi(b){curBuoi=b;document.querySelectorAll('#buoiSeg .chi-type-btn').forEach(x=>x.classList.toggle('active',x.dataset.buoi===b));}
+// Giờ kiểu VN: "06:30" → "6h30"
+function fmtTime(t){if(!t)return'';const p=String(t).split(':');return parseInt(p[0],10)+'h'+(p[1]||'00');}
+// Mức ưu tiên: badge to, đập vào mắt ngay
+const PRI_META={
+  high:{cls:'pri-high',badge:'<span class="tl-pri hi">⭐ ƯU TIÊN</span>'},
+  low:{cls:'pri-low',badge:'<span class="tl-pri lo">💤 Bỏ được</span>'},
+  normal:{cls:'',badge:''}
+};
+function priOf(x){return PRI_META[x.pri]||PRI_META.normal;}
+function fillTimeSelects(hSel,mSel,val){
+  const h=$(hSel),m=$(mSel);if(!h||!m)return;
+  if(!h.options.length)h.innerHTML=Array.from({length:24},(_,i)=>`<option value="${String(i).padStart(2,'0')}">${i}h</option>`).join('');
+  if(!m.options.length)m.innerHTML=Array.from({length:12},(_,i)=>{const v=String(i*5).padStart(2,'0');return `<option value="${v}">${v} phút</option>`;}).join('');
+  if(val){const p=String(val).split(':');h.value=String(parseInt(p[0],10)||0).padStart(2,'0');const mv=String(Math.round((parseInt(p[1],10)||0)/5)*5%60).padStart(2,'0');m.value=mv;}
+}
 function renderItin(){
   const totCost=itin.reduce((s,x)=>s+(+x.cost||0),0);
   const days=[...new Set(itin.map(x=>x.date))].filter(Boolean).length;
@@ -375,17 +390,23 @@ function renderItin(){
     return `<div class="day-group"><div class="day-head">
         <div class="day-badge"><div class="db-d">${d?d.getDate():'?'}</div><div class="db-m">${d?MO[d.getMonth()]:''}</div></div>
         <div><div class="dh-title">Ngày ${di+1} · ${fmtDayShort(dt)}</div><div class="dh-sub">${items.length} hoạt động · dự kiến ${fmt(dayCost)}</div></div></div>
-      <div class="timeline">${items.map(x=>`<div class="tl-item buoi-${BUOI_CLASS[x.buoi]||''}">
-          <div class="tl-top"><span class="tl-time">${esc(x.time||'')}</span><span class="tl-buoi">${esc(x.buoi)}</span><span class="tl-act">${esc(x.act)}</span>
+      <div class="timeline">${items.map(x=>{
+        const pm=priOf(x);
+        const placeLine=[x.place?esc(x.place):'',x.addr?esc(x.addr):''].filter(Boolean).join(' — ');
+        return `<div class="tl-item buoi-${BUOI_CLASS[x.buoi]||''} ${pm.cls}">
+          <div class="tl-top"><span class="tl-time">${fmtTime(x.time)}</span><span class="tl-buoi">${esc(x.buoi)}</span><span class="tl-act">${esc(x.act)}</span>${pm.badge}
             <span class="tl-del">${actBtn(`openEdit('itin','${x.id}')`,'✏️')}${actBtn(`removeItem('itin','${x.id}')`,'✕','del')}</span></div>
-          <div class="tl-sub">${x.place?`📍 ${esc(x.place)}`:''}${(+x.cost)?`<span>💵 ${fmt(x.cost)}</span>`:''}${x.note?`<span>· ${esc(x.note)}</span>`:''}</div>
-        </div>`).join('')}</div></div>`;
+          ${placeLine?`<div class="tl-line addr">📍 <span>${placeLine}</span></div>`:''}
+          ${x.note?`<div class="tl-line note">📝 <span>${esc(x.note)}</span></div>`:''}
+          ${(+x.cost)?`<div class="tl-line cost">💵 <span>${fmt(x.cost)}</span></div>`:''}
+        </div>`;}).join('')}</div></div>`;
   }).join('')||emptyState('🗓️','Chưa có lịch trình');
 }
 function addItin(){
   const act=$('iAct').value.trim();if(!act){showToast('Nhập hoạt động',false);return;}
-  itin.push({id:uid(),date:$('iDate').value||meta.tripStart,buoi:curBuoi,time:$('iTime').value,act,place:$('iPlace').value.trim(),cost:parseMoney($('iCost').value),note:$('iNote').value.trim()});
-  persist();['iAct','iPlace','iCost','iNote'].forEach(i=>$(i).value='');$('iCostP').textContent='';
+  const time=($('iHour').value||'07')+':'+($('iMin').value||'00');
+  itin.push({id:uid(),date:$('iDate').value||meta.tripStart,buoi:curBuoi,time,act,place:$('iPlace').value.trim(),addr:$('iAddr').value.trim(),pri:$('iPri').value||'normal',cost:parseMoney($('iCost').value),note:$('iNote').value.trim()});
+  persist();['iAct','iPlace','iAddr','iCost','iNote'].forEach(i=>$(i).value='');$('iCostP').textContent='';$('iPri').value='normal';
   renderItin();playOk();showToast('Đã thêm hoạt động');
 }
 
@@ -502,8 +523,9 @@ const SCHEMAS={
     {k:'name',l:'Tên',t:'text'},{k:'addr',l:'Địa chỉ',t:'text'},{k:'price',l:'Giá/phòng/đêm',t:'money'},
     {k:'ppl',l:'Người/phòng',t:'number'},{k:'nights',l:'Số đêm',t:'number'},{k:'rooms',l:'Số phòng',t:'number'},{k:'note',l:'Ghi chú',t:'text'}]},
   itin:{title:'✏️ Sửa hoạt động',fields:[
-    {k:'date',l:'Ngày',t:'date'},{k:'buoi',l:'Buổi',t:'select',opt:BUOIS},{k:'time',l:'Thời gian',t:'time'},
-    {k:'act',l:'Hoạt động',t:'text'},{k:'place',l:'Địa điểm',t:'text'},{k:'cost',l:'Chi phí dự kiến',t:'money'},{k:'note',l:'Ghi chú',t:'text'}]},
+    {k:'date',l:'Ngày',t:'date'},{k:'buoi',l:'Buổi',t:'select',opt:BUOIS},{k:'time',l:'Giờ (0h → 23h)',t:'time24'},
+    {k:'act',l:'Hoạt động',t:'text'},{k:'place',l:'Địa điểm (tên nơi)',t:'text'},{k:'addr',l:'Địa chỉ cụ thể',t:'text'},
+    {k:'pri',l:'Mức độ ưu tiên',t:'pri'},{k:'cost',l:'Chi phí dự kiến',t:'money'},{k:'note',l:'Ghi chú',t:'text'}]},
   place:{title:'✏️ Sửa địa điểm',fields:[
     {k:'name',l:'Tên',t:'text'},{k:'type',l:'Loại',t:'placetype'},{k:'addr',l:'Địa chỉ',t:'text'},
     {k:'cost',l:'Chi phí/người',t:'money'},{k:'pri',l:'Ưu tiên',t:'select',opt:['Cao','Trung bình','Thấp']},{k:'note',l:'Ghi chú',t:'text'}]},
@@ -527,6 +549,13 @@ function openEdit(type,id){
     else if(f.t==='number')ctrl=`<input type="number" id="ed_${f.k}" value="${esc(v)}"/>`;
     else if(f.t==='date')ctrl=`<input type="date" id="ed_${f.k}" value="${esc(v)}"/>`;
     else if(f.t==='time')ctrl=`<input type="time" id="ed_${f.k}" value="${esc(v)}"/>`;
+    else if(f.t==='time24'){
+      const p=String(v||'07:00').split(':');const hv=String(parseInt(p[0],10)||0).padStart(2,'0');const mv=String(Math.round((parseInt(p[1],10)||0)/5)*5%60).padStart(2,'0');
+      const hOpts=Array.from({length:24},(_,i)=>{const iv=String(i).padStart(2,'0');return `<option value="${iv}"${iv===hv?' selected':''}>${i}h</option>`;}).join('');
+      const mOpts=Array.from({length:12},(_,i)=>{const iv=String(i*5).padStart(2,'0');return `<option value="${iv}"${iv===mv?' selected':''}>${iv} phút</option>`;}).join('');
+      ctrl=`<div style="display:flex;gap:6px;align-items:center;"><select id="ed_${f.k}_h" style="flex:1;">${hOpts}</select><span style="color:var(--text3);font-weight:700;">:</span><select id="ed_${f.k}_m" style="flex:1;">${mOpts}</select></div>`;
+    }
+    else if(f.t==='pri')ctrl=`<select id="ed_${f.k}"><option value="normal"${(!v||v==='normal')?' selected':''}>🔘 Bình thường</option><option value="high"${v==='high'?' selected':''}>⭐ ƯU TIÊN — nhất định phải đi</option><option value="low"${v==='low'?' selected':''}>💤 Không ưu tiên — bỏ được</option></select>`;
     else if(f.t==='money')ctrl=`<input type="text" inputmode="decimal" id="ed_${f.k}" value="${v||''}"/>`;
     else if(f.t==='select')ctrl=`<select id="ed_${f.k}">${f.opt.map(o=>`<option${o===v?' selected':''}>${esc(o)}</option>`).join('')}</select>`;
     else if(f.t==='cat')ctrl=`<select id="ed_${f.k}">${EXP_CATS.map(c=>`<option value="${c.name}"${c.name===v?' selected':''}>${c.emoji} ${c.name}</option>`).join('')}</select>`;
@@ -542,6 +571,11 @@ function saveEdit(){
   if(!editing)return;const {type,id,oldName}=editing;const sc=SCHEMAS[type];
   const it=COLL[type]().find(x=>x.id===id);if(!it){closeEdit();return;}
   sc.fields.forEach(f=>{
+    if(f.t==='time24'){
+      const h=$('ed_'+f.k+'_h'),m=$('ed_'+f.k+'_m');
+      if(h&&m)it[f.k]=h.value+':'+m.value;
+      return;
+    }
     const el=$('ed_'+f.k);if(!el)return;let val=el.value;
     if(f.t==='number')val=+val||0;else if(f.t==='money')val=parseMoney(val);else val=String(val).trim();
     it[f.k]=val;
@@ -685,6 +719,7 @@ function init(){
   const today=new Date().toISOString().slice(0,10);
   ['eDate','iDate','cDue'].forEach(id=>{if($(id)&&!$(id).value)$(id).value=meta.tripStart||today;});
   ['mGo','mBack'].forEach(id=>{if($(id))$(id).value=meta.tripStart||today;});
+  fillTimeSelects('iHour','iMin','07:00');
   fillUnitSelects();
   renderOverview();
   runCountingAnimations();

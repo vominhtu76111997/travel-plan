@@ -86,12 +86,32 @@
 .tl-item.buoi-noon::before{background:#D85A30;}
 .tl-item.buoi-afternoon::before{background:#378ADD;}
 .tl-item.buoi-evening::before{background:#7C5CFF;}
-.tl-top{display:flex;align-items:center;gap:8px;margin-bottom:3px;flex-wrap:wrap;}
-.tl-time{font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace;color:var(--accent);}
-.tl-buoi{font-size:9px;padding:2px 7px;border-radius:10px;background:var(--bg3);color:var(--text2);font-weight:600;}
-.tl-act{font-size:13px;font-weight:600;}
-.tl-sub{font-size:11px;color:var(--text3);margin-top:2px;display:flex;gap:8px;flex-wrap:wrap;align-items:center;}
-.tl-del{margin-left:auto;}
+.tl-top{display:flex;align-items:center;gap:8px;margin-bottom:5px;flex-wrap:wrap;}
+.tl-time{font-size:13px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent);min-width:44px;}
+.tl-buoi{font-size:10px;padding:3px 9px;border-radius:10px;background:var(--bg3);color:var(--text2);font-weight:700;}
+.tl-act{font-size:14.5px;font-weight:700;letter-spacing:-.2px;}
+.tl-del{margin-left:auto;display:flex;gap:3px;}
+/* Mỗi thông tin 1 dòng riêng — to, rõ, dễ đọc */
+.tl-line{display:flex;align-items:flex-start;gap:7px;font-size:13px;color:var(--text2);margin-top:5px;line-height:1.55;}
+.tl-line>span{flex:1;min-width:0;}
+.tl-line.addr{color:var(--text2);}
+.tl-line.addr>span{font-weight:500;}
+.tl-line.note{color:var(--text2);font-style:italic;}
+.tl-line.cost>span{font-family:'JetBrains Mono',monospace;font-weight:700;color:var(--accent2);font-style:normal;}
+/* Badge ưu tiên — đập vào mắt ngay */
+.tl-pri{font-size:10px;font-weight:800;padding:3px 10px;border-radius:20px;letter-spacing:.4px;white-space:nowrap;}
+.tl-pri.hi{background:linear-gradient(135deg,#F0B429,#E8890C);color:#fff;box-shadow:0 3px 12px rgba(240,180,41,.45);animation:priPulse 2s ease-in-out infinite;}
+.tl-pri.lo{background:var(--bg3);color:var(--text3);border:.5px dashed var(--border2);}
+@keyframes priPulse{0%,100%{box-shadow:0 3px 12px rgba(240,180,41,.45);}50%{box-shadow:0 3px 20px rgba(240,180,41,.75);}}
+/* Hoạt động ƯU TIÊN: cả khối được tô nổi */
+.tl-item.pri-high{background:linear-gradient(90deg,rgba(240,180,41,.10),transparent 75%);border-radius:10px;padding-left:10px;margin-left:-10px;border-bottom-color:rgba(240,180,41,.25);}
+.tl-item.pri-high::before{left:-9px;background:#F0B429;box-shadow:0 0 0 3px var(--bg),0 0 12px rgba(240,180,41,.8);}
+.tl-item.pri-low{opacity:.6;}
+@media(max-width:768px){
+  .tl-act{font-size:15.5px;}
+  .tl-line{font-size:14px;}
+  .tl-time{font-size:14px;}
+}
 
 /* Compact list cards */
 .list-card{display:flex;align-items:center;gap:12px;padding:12px 14px;background:var(--bg2);border:.5px solid var(--border);border-radius:12px;margin-bottom:9px;transition:transform .2s cubic-bezier(.22,1,.36,1),border-color .2s,box-shadow .2s;animation:fadeInScale .35s cubic-bezier(.22,1,.36,1) both;}
